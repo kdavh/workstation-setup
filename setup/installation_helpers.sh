@@ -10,22 +10,22 @@ function bootstrap_installation_environment() {
         if [ "$os_flavor" = 'debian' ]; then
 		    sudo apt install -y python3-pip;
 	    elif [ "$os_flavor" = 'mac' ]; then
-            if [ ! command -v brew ]; then
+            if ! command -v brew; then
                 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
             fi
-            brew install -y python3
+            brew install python3
+        else
+            echo "OS FLAVOR \"${os_flavor}\"" not handled
+            exit 1
         fi
 
-		echo "OS FLAVOR \"${os_flavor}\"" not handled
-		exit 1
-        fi
         pip3 install virtualenv
 
-        virtualenv ./venv
+        virtualenv -p python3 ./venv
         source ./venv/bin/activate
 
         # in venv
-        pip install pyyaml
+        pip install pyyaml requests
     else
         source ./venv/bin/activate
     fi

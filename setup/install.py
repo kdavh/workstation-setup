@@ -5,7 +5,7 @@ from typing import Dict
 import yaml
 
 from manifest import Manifest
-from package import Package
+from package import Package, PackageName
 from package_service import PackageService
 
 
