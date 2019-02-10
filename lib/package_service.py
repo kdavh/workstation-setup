@@ -4,12 +4,13 @@ from subprocess import run
 from typing import List
 import yaml
 
+import introspect
 from package import Package, PackageName, PACKAGE_DEFINITIONS_REPOS
 from repo import pull
 
 class PackageService(object):
-    def __init__(self, os_flavor: str):
-        self._os_flavor = os_flavor
+    def __init__(self, os_flavor: str=None):
+        self._os_flavor = os_flavor or introspect.os_flavor()
         self._data = {}
 
     def install(self, name: PackageName, dependency_of: List[Package] = []):

@@ -1,12 +1,16 @@
+CONFIG_DIR="$HOME/.workstation-config"
+LIB_DIR="$CONFIG_DIR/workstation-setup/lib"
+
 function os_flavor() {
     echo $((test $(uname) = 'Darwin' && echo 'mac') || \cat /etc/*-release | grep -Po '(?<=^ID\=)\w*')
 }
 
-function bootstrap_installation_environment() {
-    os_flavor=$1
-    shift
+function set_up_environment() {
+    ! test -d $CONFIG_DIR && mkdir -p $CONFIG_DIR
 
-    if [ ! -d ./venv ]; then
+    os_flavor=$(os_flavor)
+
+    if [ ! -d $CONFIG_DIR/venv ]; then
         if [ "$os_flavor" = 'debian' ]; then
 		    sudo apt install -y python3-pip;
 	    elif [ "$os_flavor" = 'mac' ]; then
@@ -21,12 +25,16 @@ function bootstrap_installation_environment() {
 
         pip3 install virtualenv
 
-        virtualenv -p python3 ./venv
-        source ./venv/bin/activate
+        virtualenv -p python3 $CONFIG_DIR/venv
+        source $CONFIG_DIR/venv/bin/activate
 
-        # in venv
+        # requirements for venv
         pip install pyyaml requests
     else
-        source ./venv/bin/activate
+        source $CONFIG_DIR/venv/bin/activate
     fi
+}
+
+function tear_down_environment() {
+   deactivate
 }

@@ -1,18 +1,12 @@
-import os
-from subprocess import run, DEVNULL
 import sys
-from typing import Dict
-import yaml
 
 from manifest import Manifest
-from package import Package, PackageName
 from package_service import PackageService
 
 
-OS_FLAVOR = sys.argv[1]
-MANIFEST_REPO = sys.argv[2]
+manifest_repo = sys.argv[1]
 
-manifest = Manifest(MANIFEST_REPO, PackageService(OS_FLAVOR))
+manifest = Manifest(manifest_repo, PackageService())
 manifest.install()
 
 

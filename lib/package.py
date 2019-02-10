@@ -61,22 +61,27 @@ class Package():
             if self._os_flavor in definition.get('os_flavors'):
                 # shortcut to install package using os's default installer
                 if definition.get('package_name'):
-                    check_install_cmd, install_cmd = self._os_package_install(definition.get('package_name'))
+                    check_install_cmd = self._os_default_check_install.format(definition.get('package_name'))
+                    install_cmd = self._os_default_install.format(definition.get('package_name'))
+                    print('oSOSOSOSOS')
+                    print(self._os_flavor)
+                    print(check_install_cmd)
                     break
 
                 check_install_cmd = definition.get('check_install')
                 install_cmd = definition.get('install')
+
                 break
 
         print('Installing: {}... '.format(self._name), end='')
 
         if check_install_cmd and install_cmd:
-            result = Popen('set -x \n' + check_install_cmd, shell=True, executable='/bin/bash', text=True, env=self._env())
+            result = Popen(self._check_install_setup + check_install_cmd, shell=True, executable='/bin/bash', text=True, env=self._env())
             if result.returncode == 0:
                 print('already installed, skipping')
                 return True
 
-            result = Popen('set -x \n' + install_cmd, shell=True, executable='/bin/bash', text=True, env=self._env())
+            result = Popen(self._install_setup + install_cmd, shell=True, executable='/bin/bash', text=True, env=self._env())
             if result.returncode == 0:
                 print('✓')
             else:
@@ -85,23 +90,45 @@ class Package():
 
             return True
         else:
-            raise Exception('"install" and "check_install" required for {} {}'.format(self._os_flavor, self._name))
+            raise Exception('"install" and "check_install" required for "{}" "{}"'.format(self._os_flavor, self._name))
 
-    def _os_package_install(self, name: str) -> Tuple[str, str]:
+    @property
+    def _os_default_check_install(self) -> str:
         if self._os_flavor == 'debian':
-            return (
-                "apt -qq --installed list apt -qq --installed list {} | grep -P '.+'".format(name),
-                "sudo apt install -y {}".format(name)
-            )
+            return "apt -qq --installed list apt -qq --installed list {} | grep -P '.+'"
 
         elif self._os_flavor == 'mac':
-            return (
-                "brew ls --versions {}".format(name),
-                "brew install {}".format(name)
-            )
+            return "brew ls --versions {}"
+
+    @property
+    def _os_default_install(self) -> str:
+        if self._os_flavor == 'debian':
+            return "sudo apt install -y {}"
+
+        elif self._os_flavor == 'mac':
+            return "brew install {}"
+
+    @property
+    def _check_install_setup(self):
+        return """
+            function package_manager_check_install() {{
+                {}
+            }};
+            set -x;
+        """.format(self._os_default_check_install.format('"$1"'))
+
+    @property
+    def _install_setup(self):
+        return """
+            function package_manager_install() {{
+                {}
+            }};
+            set -x;
+        """.format(self._os_default_install.format('"$1"'))
 
     def _env(self) -> Dict[str, str]:
         return {
             'DATA_DIR': self._fs_context,
             'HOME': os.getenv('HOME'),
+            'OS_FLAVOR': self._os_flavor,
         }
