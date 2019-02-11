@@ -1,7 +1,6 @@
-source ./installation_helpers.sh
+source $(dirname $0)/../lib/installation_helpers.sh
 
-cd $LIB_DIR
+set_up_environment
+trap tear_down_environment EXIT
 
-bootstrap_installation_environment
-
-python ./install.py "$1"
+python $LIB_DIR/install.py "$1"

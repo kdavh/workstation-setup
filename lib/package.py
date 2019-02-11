@@ -1,7 +1,7 @@
 from logging import getLogger
 import os
 from os import path
-from subprocess import Popen, DEVNULL, STDOUT
+from subprocess import Popen, PIPE, run
 from typing import Callable, Dict, Tuple, List
 
 from __init__ import CONFIG_DIR
@@ -42,14 +42,14 @@ class Package():
         self._fs_context = fs_context
 
 
-    def install(self, handle_dependency: Callable[[str], None], dependency_of: List['Package']) -> bool:
+    def install(self, handle_dependency: Callable[[str], None], dependency_of: List['Package'] = []) -> bool:
         dependencies: List[str] = self._data.get('dependencies', [])
         if dependencies:
             print('Installing dependencies for: {}... '.format(self._name))
 
             for dep in dependencies:
                 print('... Dependency ', end='')
-                success = handle_dependency(dep, dependency_of.append(self))
+                success = handle_dependency(dep, dependency_of + [self])
                 if not success:
                     print('Aborting')
                     return False
@@ -63,9 +63,6 @@ class Package():
                 if definition.get('package_name'):
                     check_install_cmd = self._os_default_check_install.format(definition.get('package_name'))
                     install_cmd = self._os_default_install.format(definition.get('package_name'))
-                    print('oSOSOSOSOS')
-                    print(self._os_flavor)
-                    print(check_install_cmd)
                     break
 
                 check_install_cmd = definition.get('check_install')
@@ -76,12 +73,12 @@ class Package():
         print('Installing: {}... '.format(self._name), end='')
 
         if check_install_cmd and install_cmd:
-            result = Popen(self._check_install_setup + check_install_cmd, shell=True, executable='/bin/bash', text=True, env=self._env())
+            result = self._run(self._check_install_setup + check_install_cmd)
             if result.returncode == 0:
                 print('already installed, skipping')
                 return True
 
-            result = Popen(self._install_setup + install_cmd, shell=True, executable='/bin/bash', text=True, env=self._env())
+            result = self._run(self._install_setup + install_cmd)
             if result.returncode == 0:
                 print('✓')
             else:
@@ -91,6 +88,9 @@ class Package():
             return True
         else:
             raise Exception('"install" and "check_install" required for "{}" "{}"'.format(self._os_flavor, self._name))
+
+    def _run(self, cmd):
+        return run(cmd, shell=True, executable='/bin/bash', text=True, env=self._env())
 
     @property
     def _os_default_check_install(self) -> str:
@@ -112,18 +112,19 @@ class Package():
     def _check_install_setup(self):
         return """
             function package_manager_check_install() {{
-                {}
+                {};
             }};
-            set -x;
+            set -x; # verbose
         """.format(self._os_default_check_install.format('"$1"'))
 
     @property
     def _install_setup(self):
         return """
             function package_manager_install() {{
-                {}
+                {};
             }};
-            set -x;
+            set -e; # exit on error
+            set -x; # verbose
         """.format(self._os_default_install.format('"$1"'))
 
     def _env(self) -> Dict[str, str]:
