@@ -12,6 +12,7 @@ function set_up_environment() {
 
     if [ ! -d $CONFIG_DIR/venv ]; then
         if [ "$os_flavor" = 'debian' ]; then
+            sudo apt-get update
             sudo apt install -y python3-pip;
         elif [ "$os_flavor" = 'mac' ]; then
             if ! command -v brew; then
