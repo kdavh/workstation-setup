@@ -3,7 +3,7 @@ convenience script for setting up new workstation
 
 ## Install
 ```
-$ curl -fsS https://raw.githubusercontent.com/kdavh/workstation-setup/master/install.sh | sh
+$ bash -c "$(curl -fsS https://raw.githubusercontent.com/kdavh/workstation-setup/master/install.sh)"
 ```
 
 ## Usage
