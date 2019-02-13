@@ -4,7 +4,9 @@ mkdir -p $CONFIG_DIR
 
 if ! test -d $CONFIG_DIR/workstation-setup; then
     cd $CONFIG_DIR
-    git clone git@github.com:kdavh/workstation-setup.git
+    git clone https://github.com/kdavh/workstation-setup.git
+    cd $CONFIG_DIR/workstation-setup
+    git remote set-url origin git@github.com:kdavh/workstation-setup.git
 fi
 
 # set up git ssh keys
