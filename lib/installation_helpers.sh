@@ -12,8 +12,8 @@ function set_up_environment() {
 
     if [ ! -d $CONFIG_DIR/venv ]; then
         if [ "$os_flavor" = 'debian' ]; then
-		    sudo apt install -y python3-pip;
-	    elif [ "$os_flavor" = 'mac' ]; then
+            sudo apt install -y python3-pip;
+        elif [ "$os_flavor" = 'mac' ]; then
             if ! command -v brew; then
                 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
             fi
@@ -25,7 +25,8 @@ function set_up_environment() {
 
         pip3 install virtualenv
 
-        virtualenv -p python3 $CONFIG_DIR/venv
+        # linux non-sudo virtualenv install does not put virtualenv in $PATH
+        python3 -m virtualenv -p python3 $CONFIG_DIR/venv
         source $CONFIG_DIR/venv/bin/activate
 
         # requirements for venv
