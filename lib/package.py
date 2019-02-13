@@ -114,6 +114,7 @@ class Package():
             function package_manager_check_install() {{
                 {};
             }};
+            source $HOME/.bash_profile;
             set -x; # verbose
         """.format(self._os_default_check_install.format('"$1"'))
 
@@ -123,6 +124,7 @@ class Package():
             function package_manager_install() {{
                 {};
             }};
+            source $HOME/.bash_profile;
             set -e; # exit on error
             set -x; # verbose
         """.format(self._os_default_install.format('"$1"'))
