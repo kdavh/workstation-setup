@@ -12,4 +12,4 @@ $ curl -fsS https://raw.githubusercontent.com/kdavh/workstation-setup/master/ins
 $ ~/.workstation-config/workstation-setup/bin/install_manifest.sh kdavh/manifest-home
 
 # install one package
-$ ~/.workstation-config/workstation-setup/bin/install.sh git
+$ ~/.workstation-config/workstation-setup/bin/install.sh kdavh/packages-core:git
