@@ -43,7 +43,7 @@ class Package():
 
 
     def install(self, handle_dependency: Callable[[str], None], dependency_of: List['Package'] = []) -> bool:
-        dependencies: List[str] = self._data.get('dependencies', [])
+        dependencies = self._data.get('dependencies', [])
         if dependencies:
             print('Installing dependencies for: {}... '.format(self._name))
 
