@@ -1,12 +1,10 @@
-from subprocess import run, PIPE
+from subprocess import check_output, PIPE
 
 from __init__ import LIB_DIR
 
 def os_flavor():
-    return run(
+    return check_output(
         "source {}/installation_helpers.sh; os_flavor".format(LIB_DIR),
-        # capture_output=True only available in python 3.7
-        stdout=PIPE,
-        stderr=PIPE,
+        executable='/bin/bash',
         shell=True
-    ).stdout.decode().strip()
+    ).decode().strip()
