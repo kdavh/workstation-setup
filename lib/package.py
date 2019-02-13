@@ -90,7 +90,7 @@ class Package():
             raise Exception('"install" and "check_install" required for "{}" "{}"'.format(self._os_flavor, self._name))
 
     def _run(self, cmd):
-        return run(cmd, shell=True, executable='/bin/bash', text=True, env=self._env())
+        return run(cmd, shell=True, executable='/bin/bash', env=self._env())
 
     @property
     def _os_default_check_install(self) -> str:
