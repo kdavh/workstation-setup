@@ -1,3 +1,4 @@
+from copy import deepcopy
 from logging import getLogger
 import os
 from os import path
@@ -37,8 +38,8 @@ class Package():
     def __init__(self, os_flavor: str, name: PackageName, data: Dict, fs_context: str):
         self._os_flavor = os_flavor
         self._name = name
-        data['dependencies'] = [PackageName(d, own_repo=name.repo) for d in data.get('dependencies', [])]
-        self._data = data
+        self._data = deepcopy(data)
+        self._data['dependencies'] = [PackageName(d, own_repo=name.repo) for d in self._data.get('dependencies', [])]
         self._fs_context = fs_context
 
 
