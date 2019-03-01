@@ -43,6 +43,9 @@ class Package():
         self._fs_context = fs_context
 
 
+    def export(self, handle_dependency: Callable[[str], None], dependency_of: List['Package'] = []) -> bool:
+        raise Exception('TODO')
+
     def install(self, handle_dependency: Callable[[str], None], dependency_of: List['Package'] = []) -> bool:
         dependencies = self._data.get('dependencies', [])
         if dependencies:

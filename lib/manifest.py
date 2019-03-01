@@ -41,4 +41,6 @@ class Manifest:
         for package_name in self._list:
             self._package_service.install(package_name)
 
-
+    def export(self):
+        for package_name in self._list:
+            self._package_service.export(package_name)

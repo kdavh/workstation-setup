@@ -20,6 +20,13 @@ class PackageService(object):
         # pass self.install so Package can trigger an install for each of its dependencies
         return package.install(self.install, dependency_of)
 
+    def export(self, name: PackageName, dependency_of: List[Package] = []):
+        definitions_dir = path.join(PACKAGE_DEFINITIONS_REPOS, name.repo, 'package_definitions')
+        package = Package(self._os_flavor, name, self._package_data(name), definitions_dir)
+
+        # pass self.export so Package can trigger an export for each of its dependencies
+        return package.export(self.export, dependency_of)
+
     def _package_data(self, name: PackageName):
         pull(PACKAGE_DEFINITIONS_REPOS, name.repo)
         definitions_dir = path.join(PACKAGE_DEFINITIONS_REPOS, name.repo, 'package_definitions')
