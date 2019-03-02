@@ -93,7 +93,7 @@ class Package():
         if check_install_cmd and install_cmd:
             result = self._run(self._check_install_setup + check_install_cmd)
             if result.returncode == 0:
-                notify.normal('already installed, skipping')
+                notify.normal(' -- already installed, skipping')
                 return True
 
             result = self._run(self._install_setup + install_cmd)
