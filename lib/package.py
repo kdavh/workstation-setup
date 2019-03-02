@@ -6,6 +6,7 @@ from subprocess import Popen, PIPE, run
 from typing import Callable, Dict, Tuple, List
 
 from __init__ import CONFIG_DIR
+import notify
 
 PACKAGE_DEFINITIONS_REPOS = CONFIG_DIR + '/package_definitions'
 
@@ -31,7 +32,7 @@ class PackageName():
         return False
 
     def __str__(self):
-        return '<PackageName "{}"'.format(self.full)
+        return self.full
 
 
 class Package():
@@ -42,21 +43,34 @@ class Package():
         self._data['dependencies'] = [PackageName(d, own_repo=name.repo) for d in self._data.get('dependencies', [])]
         self._fs_context = fs_context
 
-
     def export(self, handle_dependency: Callable[[str], None], dependency_of: List['Package'] = []) -> bool:
-        raise Exception('TODO')
+        if not self._handle_dependencies(handle_dependency, dependency_of):
+            return False
+
+        export_cmd = ''
+
+        for definition in self._data.get('definitions', []):
+            if self._os_flavor in definition.get('os_flavors'):
+                export_cmd = definition.get('export')
+
+                break
+
+        notify.highlight(self._name, end='')
+        if export_cmd:
+            result = self._run(self._export_setup + export_cmd)
+            if result.returncode == 0:
+                notify.success(' -- Exported ✓✓✓')
+                return True
+            else:
+                notify.failed(' -- Failed')
+                return False
+        else:
+            notify.normal(' -- nothing to do')
+            return True
 
     def install(self, handle_dependency: Callable[[str], None], dependency_of: List['Package'] = []) -> bool:
-        dependencies = self._data.get('dependencies', [])
-        if dependencies:
-            print('Installing dependencies for: {}... '.format(self._name))
-
-            for dep in dependencies:
-                print('... Dependency ', end='')
-                success = handle_dependency(dep, dependency_of + [self])
-                if not success:
-                    print('Aborting')
-                    return False
+        if not self._handle_dependencies(handle_dependency, dependency_of):
+            return False
 
         check_install_cmd = ''
         install_cmd = ''
@@ -74,24 +88,38 @@ class Package():
 
                 break
 
-        print('Installing: {}... '.format(self._name), end='')
+        notify.highlight(self._name, end='')
 
         if check_install_cmd and install_cmd:
             result = self._run(self._check_install_setup + check_install_cmd)
             if result.returncode == 0:
-                print('already installed, skipping')
+                notify.normal('already installed, skipping')
                 return True
 
             result = self._run(self._install_setup + install_cmd)
             if result.returncode == 0:
-                print('✓')
+                notify.success(' -- Installed ✓✓✓')
             else:
-                print('Failed')
+                notify.failed(' -- Failed')
                 return False
 
             return True
         else:
             raise Exception('"install" and "check_install" required for "{}" "{}"'.format(self._os_flavor, self._name))
+
+    def _handle_dependencies(self, handle_dependency: Callable[[str], None], dependency_of: List['Package']) -> bool:
+        dependencies = self._data.get('dependencies', [])
+        if dependencies:
+            notify.subtle('Dependencies for: {}... '.format(self._name))
+
+            for dep in dependencies:
+                notify.subtle('... Dependency ', end='')
+                success = handle_dependency(dep, dependency_of + [self])
+                if not success:
+                    notify.failed('Aborting')
+                    return False
+
+        return True
 
     def _run(self, cmd):
         return run(cmd, shell=True, executable='/bin/bash', env=self._env())
@@ -132,6 +160,14 @@ class Package():
             set -e; # exit on error
             set -x; # verbose
         """.format(self._os_default_install.format('"$1"'))
+
+    @property
+    def _export_setup(self):
+        return """
+            source $HOME/.bash_profile;
+            set -e; # exit on error
+            set -x; # verbose
+        """
 
     def _env(self) -> Dict[str, str]:
         return {

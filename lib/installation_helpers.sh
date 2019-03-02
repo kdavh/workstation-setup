@@ -1,5 +1,6 @@
 CONFIG_DIR="$HOME/.workstation-config"
 LIB_DIR="$CONFIG_DIR/workstation-setup/lib"
+PACKAGE_DEFS_DIR="$CONFIG_DIR/package_definitions"
 
 function os_flavor() {
     echo $((test $(uname) = 'Darwin' && echo 'mac') || \cat /etc/*-release | grep -Po '(?<=^ID\=)\w*')
@@ -31,7 +32,11 @@ function set_up_environment() {
         source $CONFIG_DIR/venv/bin/activate
 
         # requirements for venv
-        pip install pyyaml requests
+        pip install \
+            pyyaml \
+            pylint \
+            requests \
+            termcolor
     else
         source $CONFIG_DIR/venv/bin/activate
     fi
