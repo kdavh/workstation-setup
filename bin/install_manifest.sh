@@ -3,4 +3,4 @@ source $(dirname $0)/../lib/installation_helpers.sh
 set_up_environment
 trap tear_down_environment EXIT
 
-python $LIB_DIR/install_manifest.py "$1"
+python $LIB_DIR/run_install_manifest.py "$@"
