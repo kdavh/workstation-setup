@@ -142,6 +142,8 @@ class Package():
 
     def _run(self, cmd, verbose=True):
         kwargs = {}
+        # TODO: move out to TerminalDisplay.   It gets initial value of verboseness from cli flag.
+        # it determines what to display.  Use a event_stream.writeln method or something to signify text instead of event
         if not verbose:
             kwargs['stderr'] = DEVNULL
             kwargs['stdout'] = DEVNULL
