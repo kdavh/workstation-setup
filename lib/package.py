@@ -2,11 +2,14 @@ from copy import deepcopy
 from logging import getLogger
 import os
 from os import path
-from subprocess import Popen, PIPE, run
+from subprocess import DEVNULL, Popen, PIPE, run
 from typing import Callable, Dict, Tuple, List
 
 from __init__ import CONFIG_DIR
-import notify
+from events import (EventStream,
+    INSTALL_STARTED, INSTALL_SUCCEEDED, INSTALL_FAILED, INSTALL_ALREADY_DONE,
+    EXPORT_STARTED, EXPORT_SUCCEEDED, EXPORT_FAILED, EXPORT_ALREADY_DONE,
+)
 
 PACKAGE_DEFINITIONS_REPOS = CONFIG_DIR + '/package_definitions'
 
@@ -36,41 +39,31 @@ class PackageName():
 
 
 class Package():
-    def __init__(self, os_flavor: str, name: PackageName, data: Dict, fs_context: str):
+    def __init__(self,
+        os_flavor: str,
+        name: PackageName,
+        data: Dict,
+        fs_context: str,
+        event_stream: EventStream
+    ):
         self._os_flavor = os_flavor
         self._name = name
         self._data = deepcopy(data)
         self._data['dependencies'] = [PackageName(d, own_repo=name.repo) for d in self._data.get('dependencies', [])]
         self._fs_context = fs_context
+        self._event_stream = event_stream
 
-    def export(self, handle_dependency: Callable[[str], None], dependency_of: List['Package'] = []) -> bool:
-        if not self._handle_dependencies(handle_dependency, dependency_of):
-            return False
+    def install(self,
+        handle_dependency: Callable[[str], None],
+        dependency_of: List['Package'] = [],
+        force: bool = False,
+        ignore_dependencies: bool = False
+    ) -> bool:
+        self._event_stream.push(INSTALL_STARTED, self._name)
 
-        export_cmd = ''
-
-        for definition in self._data.get('definitions', []):
-            if self._os_flavor in definition.get('os_flavors'):
-                export_cmd = definition.get('export')
-
-                break
-
-        notify.highlight(self._name, end='')
-        if export_cmd:
-            result = self._run(self._export_setup + export_cmd)
-            if result.returncode == 0:
-                notify.success(' -- Exported ✓✓✓')
-                return True
-            else:
-                notify.failed(' -- Failed')
+        if not ignore_dependencies:
+            if not self._handle_dependencies(handle_dependency, dependency_of, force):
                 return False
-        else:
-            notify.normal(' -- nothing to do')
-            return True
-
-    def install(self, handle_dependency: Callable[[str], None], dependency_of: List['Package'] = []) -> bool:
-        if not self._handle_dependencies(handle_dependency, dependency_of):
-            return False
 
         check_install_cmd = ''
         install_cmd = ''
@@ -88,41 +81,71 @@ class Package():
 
                 break
 
-        notify.highlight(self._name, end='')
-
         if check_install_cmd and install_cmd:
-            result = self._run(self._check_install_setup + check_install_cmd)
+            result = self._run(self._check_install_setup + check_install_cmd, verbose=False)
             if result.returncode == 0:
-                notify.normal(' -- already installed, skipping')
+                self._event_stream.push(INSTALL_ALREADY_DONE, self._name)
+
+            if not force:
                 return True
 
             result = self._run(self._install_setup + install_cmd)
             if result.returncode == 0:
-                notify.success(' -- Installed ✓✓✓')
+                self._event_stream.push(INSTALL_SUCCEEDED, self._name)
             else:
-                notify.failed(' -- Failed')
+                self._event_stream.push(INSTALL_FAILED, self._name)
                 return False
 
             return True
         else:
             raise Exception('"install" and "check_install" required for "{}" "{}"'.format(self._os_flavor, self._name))
 
-    def _handle_dependencies(self, handle_dependency: Callable[[str], None], dependency_of: List['Package']) -> bool:
-        dependencies = self._data.get('dependencies', [])
-        if dependencies:
-            notify.subtle('Dependencies for: {}... '.format(self._name))
+    def export(self,
+        handle_dependency: Callable[[str], None],
+        dependency_of: List['Package'] = [],
+    ) -> bool:
+        self._event_stream.push(EXPORT_STARTED, self._name)
 
+        if not self._handle_dependencies(handle_dependency, dependency_of):
+            return False
+
+        export_cmd = ''
+
+        for definition in self._data.get('definitions', []):
+            if self._os_flavor in definition.get('os_flavors'):
+                export_cmd = definition.get('export')
+
+                break
+
+        if export_cmd:
+            result = self._run(self._export_setup + export_cmd)
+            if result.returncode == 0:
+                self._event_stream.push(EXPORT_SUCCEEDED, self._name)
+                return True
+            else:
+                self._event_stream.push(EXPORT_FAILED, self._name)
+                return False
+        else:
+            self._event_stream.push(EXPORT_ALREADY_DONE, self._name)
+            return True
+
+    def _handle_dependencies(self, handle_dependency: Callable[[str], None], dependency_of: List['Package'], *args, **kwargs) -> bool:
+        dependencies = self._data.get('dependencies', [])
+
+        if dependencies:
             for dep in dependencies:
-                notify.subtle('... Dependency ', end='')
-                success = handle_dependency(dep, dependency_of + [self])
+                success = handle_dependency(dep, dependency_of + [self], *args, **kwargs)
                 if not success:
-                    notify.failed('Aborting')
                     return False
 
         return True
 
-    def _run(self, cmd):
-        return run(cmd, shell=True, executable='/bin/bash', env=self._env())
+    def _run(self, cmd, verbose=True):
+        kwargs = {}
+        if not verbose:
+            kwargs['stderr'] = DEVNULL
+            kwargs['stdout'] = DEVNULL
+        return run(cmd, shell=True, executable='/bin/bash', env=self._env(), **kwargs)
 
     @property
     def _os_default_check_install(self) -> str:
@@ -146,7 +169,7 @@ class Package():
             function package_manager_check_install() {{
                 {};
             }};
-            source $HOME/.bash_profile;
+            # source $HOME/.bash_profile;
             set -x; # verbose
         """.format(self._os_default_check_install.format('"$1"'))
 
@@ -156,7 +179,7 @@ class Package():
             function package_manager_install() {{
                 {};
             }};
-            source $HOME/.bash_profile;
+            # source $HOME/.bash_profile;
             set -e; # exit on error
             set -x; # verbose
         """.format(self._os_default_install.format('"$1"'))
@@ -164,7 +187,7 @@ class Package():
     @property
     def _export_setup(self):
         return """
-            source $HOME/.bash_profile;
+            # source $HOME/.bash_profile;
             set -e; # exit on error
             set -x; # verbose
         """
