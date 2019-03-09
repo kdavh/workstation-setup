@@ -1,6 +1,8 @@
 CONFIG_DIR="$HOME/.workstation-config"
-LIB_DIR="$CONFIG_DIR/workstation-setup/lib"
+SETUP_DIR="$CONFIG_DIR/workstation-setup"
+LIB_DIR="$SETUP_DIR/lib"
 PACKAGE_DEFS_DIR="$CONFIG_DIR/package_definitions"
+MANIFESTS_DIR="$CONFIG_DIR/manifests"
 
 function os_flavor() {
     echo $((test $(uname) = 'Darwin' && echo 'mac') || \cat /etc/*-release | grep -Po '(?<=^ID\=)\w*')
