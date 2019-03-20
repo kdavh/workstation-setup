@@ -33,6 +33,8 @@ function set_up_environment() {
         python3 -m virtualenv -p python3 $CONFIG_DIR/venv
         source $CONFIG_DIR/venv/bin/activate
 
+        # mac stopped finding wheel from venv, so make sure venv python finds it
+        export PYTHONPATH=$PYTHONPATH:$CONFIG_DIR/venv/lib/python3.7/site-packages
         # requirements for venv
         pip install \
             pyyaml \

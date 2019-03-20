@@ -52,6 +52,6 @@ class PackageService(object):
             for file in os.listdir(definitions_dir):
                 if file.endswith('.yaml'):
                     with open(path.join(definitions_dir, file)) as yaml_stream:
-                        self._data[name.repo] = {**self._data[name.repo], **yaml.load(yaml_stream)}
+                        self._data[name.repo] = {**self._data[name.repo], **yaml.safe_load(yaml_stream)}
 
         return self._data[name.repo][name.name]
