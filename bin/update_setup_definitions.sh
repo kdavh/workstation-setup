@@ -32,7 +32,7 @@ function rebase_and_push() {
 }
 
 function rebase_and_push_nested_repos() {
-    for repo_dir in "$(find "$1" -mindepth 2 -maxdepth 2)"; do
+    for repo_dir in $(find "$1" -mindepth 2 -maxdepth 2); do
         rebase_and_push $repo_dir
     done
 }

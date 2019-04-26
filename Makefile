@@ -1,8 +1,2 @@
-update-defs:
+push-code:
 	./bin/update_setup_definitions.sh
-
-install:
-	./bin/install.sh
-
-export:
-	./bin/export.sh
