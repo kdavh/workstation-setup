@@ -30,16 +30,13 @@ case "$cmd1" in
         case "$cmd2" in
             commit)
                 "${bin_dir}/config_commit.sh"
-                break
                 ;;
             edit)
                 code -n $dot_dir
-                break
                 ;;
             *)
                 echo "$cmd2 not valid"
         esac
-        break
         ;;
 
     *)
