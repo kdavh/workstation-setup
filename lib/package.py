@@ -52,6 +52,7 @@ class Package():
         self._data['dependencies'] = [PackageName(d, own_repo=name.repo) for d in self._data.get('dependencies', [])]
         self._fs_context = fs_context
         self._event_stream = event_stream
+        self._verbose = False
 
     def install(self,
         handle_dependency: Callable[[str], None],
@@ -82,12 +83,11 @@ class Package():
                 break
 
         if check_install_cmd and install_cmd:
-            result = self._run(self._check_install_setup + check_install_cmd, verbose=False)
+            result = self._run(self._check_install_setup + check_install_cmd, verbose=self._verbose)
             if result.returncode == 0:
                 self._event_stream.push(INSTALL_ALREADY_DONE, self._name)
-
-            if not force:
-                return True
+                if not force:
+                    return True
 
             result = self._run(self._install_setup + install_cmd)
             if result.returncode == 0:
