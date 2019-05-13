@@ -39,6 +39,10 @@ case "$cmd1" in
         esac
         ;;
 
+    install)
+        shift
+        $bin_dir/install_package.sh "$@"
+        ;;
     *)
         echo "$cmd1 not valid"
 esac
