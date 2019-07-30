@@ -7,10 +7,12 @@ Usage: wk [options] command subcommand
 wk is a tool for controlling workspace configuration and installation on multiple computer architectures.
 
 Commands:
-  config - commands having to do with own tool configuration
-    edit - open workstation code in editor
-    commit - commit local changes for core tools, package and manifest definitions
+    config - commands having to do with own tool configuration
+        edit - open workstation code in editor
+        commit - commit local changes for core tools, package and manifest definitions
 
+    install - install a package
+-----------
 USAGE
 )"
 
@@ -35,7 +37,7 @@ case "$cmd1" in
                 code -n $dot_dir
                 ;;
             *)
-                echo "$cmd2 not valid"
+                echo "config '$cmd2' not valid"
         esac
         ;;
 
@@ -44,5 +46,5 @@ case "$cmd1" in
         $bin_dir/install_package.sh "$@"
         ;;
     *)
-        echo "$cmd1 not valid"
+        echo "'$cmd1' not valid"
 esac
