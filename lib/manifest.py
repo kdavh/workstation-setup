@@ -40,6 +40,7 @@ class Manifest:
     def install(self):
         for package_name in self._list:
             self._package_service.install(package_name)
+            input('REVIEW AND PRESS RETURN TO CONTINUE')
 
     def export(self):
         for package_name in self._list:
