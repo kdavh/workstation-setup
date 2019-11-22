@@ -198,5 +198,6 @@ class Package():
         return {
             'DATA_DIR': self._fs_context,
             'HOME': os.getenv('HOME'),
+            'USER': os.getenv('USER'),
             'OS_FLAVOR': self._os_flavor,
         }
