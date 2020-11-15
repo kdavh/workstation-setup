@@ -1,3 +1,5 @@
+# LEGACY, USE https://github.com/kdavh/workstation
+
 # workstation-setup
 convenience script for setting up new workstation
 
